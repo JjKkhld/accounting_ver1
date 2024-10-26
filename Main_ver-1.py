@@ -32,7 +32,7 @@ def start(message):
     cat_btn8 = telebot.types.InlineKeyboardButton('Emergency', callback_data='Emergency')
     cat_btn9 = telebot.types.InlineKeyboardButton('Other', callback_data='Other')
     markup.row(cat_btn7, cat_btn8, cat_btn9)
-    cat_btn10 = telebot.types.InlineKeyboardButton('Check the data base', callback_data='check')
+    cat_btn10 = telebot.types.InlineKeyboardButton('Check the data base', callback_data='check_first')
     markup.add(cat_btn10)
 
     bot.send_message(message.chat.id, "Choose the category below:", reply_markup=markup)
@@ -42,9 +42,9 @@ def start(message):
 @bot.callback_query_handler(func=lambda callback: callback.data in ['Housing & Studies', 'Groceries', 'Transportation',
                                                                     'Clothing & Shoes', 'Body Care & Med.',
                                                                     'Media & Washing', 'Fun & Vacation',
-                                                                    'Emergency', 'Other', 'check'])
+                                                                    'Emergency', 'Other', 'check_first'])
 def callback_message(callback):
-    if callback.data != 'check':
+    if callback.data != 'check_first':
         # inform the user to enter the amount
         bot.send_message(callback.message.chat.id, f"Great, record {callback.data} was saved! Enter the amount:")
 
@@ -92,16 +92,16 @@ def cont(message):
     end_btn1 = telebot.types.InlineKeyboardButton('Yes', callback_data='yes')
     end_btn2 = telebot.types.InlineKeyboardButton('No', callback_data='no')
     markup.row(end_btn1, end_btn2)
-    markup.add(telebot.types.InlineKeyboardButton('Ckeck the database', callback_data='check'))
+    markup.add(telebot.types.InlineKeyboardButton('Ckeck the database', callback_data='check_second'))
     bot.send_message(message.chat.id, "Do you want to continue?", reply_markup=markup)
 
 
-@bot.callback_query_handler(func=lambda callback: callback.data in ['yes', 'no', 'check'])
-def callbck_con(callback):
+@bot.callback_query_handler(func=lambda callback: callback.data in ['yes', 'no', 'check_second'])
+def callback_con(callback):
     if callback.data == 'yes':
         start(callback.message)
     elif callback.data == 'no':
-        pass
+        bot.send_message(callback.message.chat.id, "Ok, enter /start to continue")
     else:
         # query database and show records
         conn = sqlite3.connect('base.sql')
@@ -110,6 +110,11 @@ def callbck_con(callback):
         records = cur.fetchall()
         cur.close()
         conn.close()
+        info = ''
+        for el in records:
+            info += f"<b>ID</b>: {el[0]}; <b>DATE</b>: {el[1]}; <b>CATEGORY</b>: {el[2]}; <b>AMOUNT</b>: {el[3]}\n"
+        bot.send_message(callback.message.chat.id, info, parse_mode='html')
+        bot.send_message(callback.message.chat.id, "Ok, enter /start to continue")
 
 
 bot.infinity_polling()
