@@ -52,13 +52,16 @@ def callback_message(callback):
         time = datetime.datetime.now().strftime("%X")
         date = f"{day}, {time}"
 
-        info = None
+        if callback.data == 'Other':
+            # Ask for a description for the "Other" category
+            bot.send_message(callback.message.chat.id, "Enter a description:")
+            bot.register_next_step_handler(callback.message, get_desc, date)
+        else:
+            # inform the user to enter the amount
+            bot.send_message(callback.message.chat.id, f"Great, record {callback.data} was saved! Enter the amount:")
 
-        # inform the user to enter the amount
-        bot.send_message(callback.message.chat.id, f"Great, record {callback.data} was saved! Enter the amount:")
-
-        # store `callback.data` in a global or state to access it later in `amount`
-        bot.register_next_step_handler(callback.message, adding, callback.data, date, info)
+            # store `callback.data` in a global or state to access it later in `amount`
+            bot.register_next_step_handler(callback.message, adding, callback.data, date, None)
     else:
         # query database and show records
         conn = sqlite3.connect('base.sql')
@@ -71,13 +74,20 @@ def callback_message(callback):
         if records:
             info = ''
             for el in records:
-                info += (f"\n<b>DATE</b>: {el[1]}; <b>CATEGORY</b>: {el[2]}; <b>AMOUNT</b>: {el[3]}, Info: {el[4]}\n"
+                info += (f"\n<b>DATE</b>: {el[1]}; <b>CATEGORY</b>: {el[2]}; <b>AMOUNT</b>: {el[3]}\n"
                          f"-----------------------------------------------------------------------------------")
             bot.send_message(callback.message.chat.id, info, parse_mode='html')
             start(callback.message)
         else:
             bot.send_message(callback.message.chat.id, "Database is empty!")
             start(callback.message)
+
+
+def get_desc(message, date):
+    # Save the description and ask for the amount
+    description = message.text
+    bot.send_message(message.chat.id, "Enter the amount for Other:")
+    bot.register_next_step_handler(message, adding, 'Other', date, description)
 
 
 def adding(message, category, date, info):
