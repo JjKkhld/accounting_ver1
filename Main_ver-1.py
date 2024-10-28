@@ -14,7 +14,7 @@ def start(message):
     cur = conn.cursor()
 
     cur.execute('CREATE TABLE IF NOT EXISTS records (id INTEGER PRIMARY KEY, '
-                'date DATE, category varchar(50), amount float)')
+                'date DATE, category varchar(50), amount float, info varchar(100))')
     conn.commit()
     cur.close()
     conn.close()
@@ -46,16 +46,19 @@ def start(message):
                                                                     'Emergency', 'Other', 'check_first'])
 def callback_message(callback):
     if callback.data != 'check_first':
-        # inform the user to enter the amount
-        bot.send_message(callback.message.chat.id, f"Great, record {callback.data} was saved! Enter the amount:")
 
         # defining the date (time and day)
         day = datetime.date.today().strftime("%x")
         time = datetime.datetime.now().strftime("%X")
         date = f"{day}, {time}"
 
+        info = None
+
+        # inform the user to enter the amount
+        bot.send_message(callback.message.chat.id, f"Great, record {callback.data} was saved! Enter the amount:")
+
         # store `callback.data` in a global or state to access it later in `amount`
-        bot.register_next_step_handler(callback.message, adding, callback.data, date)
+        bot.register_next_step_handler(callback.message, adding, callback.data, date, info)
     else:
         # query database and show records
         conn = sqlite3.connect('base.sql')
@@ -68,7 +71,7 @@ def callback_message(callback):
         if records:
             info = ''
             for el in records:
-                info += (f"\n<b>DATE</b>: {el[1]}; <b>CATEGORY</b>: {el[2]}; <b>AMOUNT</b>: {el[3]}\n"
+                info += (f"\n<b>DATE</b>: {el[1]}; <b>CATEGORY</b>: {el[2]}; <b>AMOUNT</b>: {el[3]}, Info: {el[4]}\n"
                          f"-----------------------------------------------------------------------------------")
             bot.send_message(callback.message.chat.id, info, parse_mode='html')
             start(callback.message)
@@ -77,7 +80,7 @@ def callback_message(callback):
             start(callback.message)
 
 
-def adding(message, category, date):
+def adding(message, category, date, info):
     # process and save the amount to the database
     num = message.text
     bot.send_message(message.chat.id, f"Ok, the amount {num} was added to data base!")
@@ -85,7 +88,7 @@ def adding(message, category, date):
     # database operations with parameterized query
     conn = sqlite3.connect('base.sql')
     cur = conn.cursor()
-    cur.execute("INSERT INTO records (category, amount, date) VALUES('%s', '%s', '%s')" % (category, num, date))
+    cur.execute("INSERT INTO records (category, amount, date, info) VALUES('%s', '%s', '%s', '%s')" % (category, num, date, info))
     conn.commit()
     cur.close()
     conn.close()
