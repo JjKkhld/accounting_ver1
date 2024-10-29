@@ -33,8 +33,8 @@ def start(message):
     cat_btn8 = telebot.types.InlineKeyboardButton('Emergency', callback_data='Emergency')
     cat_btn9 = telebot.types.InlineKeyboardButton('Other', callback_data='Other')
     markup.row(cat_btn7, cat_btn8, cat_btn9)
-    cat_btn10 = telebot.types.InlineKeyboardButton('Check the data base', callback_data='check_first')
-    markup.add(cat_btn10)
+    markup.add(telebot.types.InlineKeyboardButton('Check the data base', callback_data='check_first'))
+    markup.add(telebot.types.InlineKeyboardButton('Delete data', callback_data='delete'))
 
     bot.send_message(message.chat.id, "Choose the category below:", reply_markup=markup)
 
@@ -43,9 +43,17 @@ def start(message):
 @bot.callback_query_handler(func=lambda callback: callback.data in ['Housing & Studies', 'Groceries', 'Transportation',
                                                                     'Clothing & Shoes', 'Body Care & Med.',
                                                                     'Media & Washing', 'Fun & Vacation',
-                                                                    'Emergency', 'Other', 'check_first'])
+                                                                    'Emergency', 'Other', 'check_first', 'delete'])
 def callback_message(callback):
-    if callback.data != 'check_first':
+    if callback.data == 'delete':
+        conn = sqlite3.connect('base.sql')
+        cur = conn.cursor()
+        cur.execute('DROP TABLE IF EXISTS records;')
+        conn.commit()
+        cur.close()
+        conn.close()
+        bot.send_message(callback.message.chat.id, "The database was deleted! Press /start to continue")
+    elif callback.data != 'check_first':
 
         # defining the date (time and day)
         day = datetime.date.today().strftime("%x")
@@ -113,10 +121,11 @@ def cont(message):
     end_btn2 = telebot.types.InlineKeyboardButton('No', callback_data='no')
     markup.row(end_btn1, end_btn2)
     markup.add(telebot.types.InlineKeyboardButton('Ckeck the database', callback_data='check_second'))
+    markup.add(telebot.types.InlineKeyboardButton('Delete a database', callback_data='delete'))
     bot.send_message(message.chat.id, "Do you want to continue?", reply_markup=markup)
 
 
-@bot.callback_query_handler(func=lambda callback: callback.data in ['yes', 'no', 'check_second'])
+@bot.callback_query_handler(func=lambda callback: callback.data in ['yes', 'no', 'check_second', 'delete'])
 def callback_con(callback):
     if callback.data == 'yes':
         start(callback.message)
