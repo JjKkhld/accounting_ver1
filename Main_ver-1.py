@@ -7,8 +7,25 @@ import datetime
 bot = telebot.TeleBot('8158733015:AAHhE_5JMUCs0rRXL8zGocmZo27JpxI0POc')
 
 
-# creating menu of the categories (command - start)
+"""SECTION 1 - Basic functionality like creating a database, providing the data and adding buttons"""
+
+
+# crating a menu of commands
+commands = [
+    telebot.types.BotCommand('providing_data', 'Provide data!'),
+    telebot.types.BotCommand('reports', 'Get some reports!')
+]
+bot.set_my_commands(commands)
+
+
+# starting a bot
 @bot.message_handler(commands=['start'])
+def start_func(message):
+    bot.send_message(message.chat.id, "Hello, go to the menu in the left side of message field!")
+
+
+# creating a database
+@bot.message_handler(commands=['providing_data'])
 def start(message):
     conn = sqlite3.connect('base.sql')
     cur = conn.cursor()
@@ -52,7 +69,7 @@ def callback_message(callback):
         conn.commit()
         cur.close()
         conn.close()
-        bot.send_message(callback.message.chat.id, "The database was deleted! Press /start to continue")
+        bot.send_message(callback.message.chat.id, "The database was deleted! Press /providing_data to continue")
     elif callback.data != 'check_first':
 
         # defining the date (time and day)
@@ -87,8 +104,7 @@ def callback_message(callback):
             bot.send_message(callback.message.chat.id, info, parse_mode='html')
             start(callback.message)
         else:
-            bot.send_message(callback.message.chat.id, "Database is empty!")
-            start(callback.message)
+            bot.send_message(callback.message.chat.id, "Database is empty! Press /providing_data to enter a data")
 
 
 def get_desc(message, date):
@@ -130,7 +146,7 @@ def callback_con(callback):
     if callback.data == 'yes':
         start(callback.message)
     elif callback.data == 'no':
-        bot.send_message(callback.message.chat.id, "Ok, enter /start to continue")
+        bot.send_message(callback.message.chat.id, "Ok, enter /providing_data to continue")
     else:
         # query database and show records
         conn = sqlite3.connect('base.sql')
@@ -144,7 +160,15 @@ def callback_con(callback):
             info += (f"\n<b>DATE</b>: {el[1]}; <b>CATEGORY</b>: {el[2]}; <b>AMOUNT</b>: {el[3]}\n"
                      f"-----------------------------------------------------------------------------------")
         bot.send_message(callback.message.chat.id, info, parse_mode='html')
-        bot.send_message(callback.message.chat.id, "Ok, enter /start to continue")
+        bot.send_message(callback.message.chat.id, "Ok, enter /providing_data to continue")
+
+
+"""SECTION 2 - Basic functionality like creating a database, providing the data and adding buttons"""
+
+
+@bot.message_handler(commands=['reports'])
+def func(message):
+    bot.send_message(message.chat.id, "Here you can get a report")
 
 
 bot.infinity_polling()
