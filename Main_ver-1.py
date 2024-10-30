@@ -51,7 +51,7 @@ def start(message):
     cat_btn9 = telebot.types.InlineKeyboardButton('Other', callback_data='Other')
     markup.row(cat_btn7, cat_btn8, cat_btn9)
     markup.add(telebot.types.InlineKeyboardButton('Check the data base', callback_data='check_first'))
-    markup.add(telebot.types.InlineKeyboardButton('Delete data', callback_data='delete'))
+    markup.add(telebot.types.InlineKeyboardButton('Clear the database', callback_data='delete'))
 
     bot.send_message(message.chat.id, "Choose the category below:", reply_markup=markup)
 
@@ -136,8 +136,8 @@ def cont(message):
     end_btn1 = telebot.types.InlineKeyboardButton('Yes', callback_data='yes')
     end_btn2 = telebot.types.InlineKeyboardButton('No', callback_data='no')
     markup.row(end_btn1, end_btn2)
-    markup.add(telebot.types.InlineKeyboardButton('Ckeck the database', callback_data='check_second'))
-    markup.add(telebot.types.InlineKeyboardButton('Delete a database', callback_data='delete'))
+    markup.add(telebot.types.InlineKeyboardButton('Check the database', callback_data='check_second'))
+    markup.add(telebot.types.InlineKeyboardButton('Clear the database', callback_data='delete'))
     bot.send_message(message.chat.id, "Do you want to continue?", reply_markup=markup)
 
 
@@ -168,7 +168,45 @@ def callback_con(callback):
 
 @bot.message_handler(commands=['reports'])
 def func(message):
-    bot.send_message(message.chat.id, "Here you can get a report")
+    markup = telebot.types.ReplyKeyboardMarkup()
+    btn1 = telebot.types.KeyboardButton("Daily report")
+    btn2 = telebot.types.KeyboardButton("Weekly report")
+    markup.row(btn1, btn2)
+    btn3 = telebot.types.KeyboardButton("Daily report of the specific category")
+    btn4 = telebot.types.KeyboardButton("Weekly report of the specific category")
+    markup.row(btn3, btn4)
+    bot.send_message(message.chat.id, "Here you can get a report. Choose which one you want get", reply_markup=markup)
+    bot.register_next_step_handler(message, on_click)
+
+
+def on_click(message):
+
+    # defining the day
+    day = datetime.date.today().strftime("%x")
+
+    conn = sqlite3.connect('base.sql')
+    cur = conn.cursor()
+    if message.text == "Daily report":
+        cur.execute("SELECT * FROM records WHERE date LIKE '{}%'".format(day))
+        records = cur.fetchall()
+        if records:
+            info = ''
+            for el in records:
+                info += (f"\n<b>DATE</b>: {el[1]}; <b>CATEGORY</b>: {el[2]}; <b>AMOUNT</b>: {el[3]}\n"
+                     f"-----------------------------------------------------------------------------------")
+            bot.send_message(message.chat.id, info, parse_mode='html')
+        else:
+            bot.send_message(message.chat.id, "There are no records from this day, go back to /reports")
+
+
+    elif message.text == "Weekly report":
+        bot.send_message(message.chat.id, "Ok, it's weekly rep.")
+    elif message.text == "Daily report of the specific category":
+        bot.send_message(message.chat.id, "Ok, it's daily report of the specific category")
+    else:
+        bot.send_message(message.chat.id, "Ok, it's weekly report of the specific category")
+    cur.close()
+    conn.close()
 
 
 bot.infinity_polling()
