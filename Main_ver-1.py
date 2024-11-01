@@ -36,6 +36,12 @@ def start(message):
     cur.close()
     conn.close()
 
+
+    # cur.execute("SELECT * FROM records")
+    # records = cur.fetchall()
+    # cur.close()
+    # conn.close()
+
     # category buttons
     markup = telebot.types.InlineKeyboardMarkup()
     cat_btn1 = telebot.types.InlineKeyboardButton('Housing & Studies', callback_data='Housing & Studies')
@@ -180,33 +186,39 @@ def func(message):
 
 
 def on_click(message):
-
-    # defining the day
-    day = datetime.date.today().strftime("%x")
-
     conn = sqlite3.connect('base.sql')
     cur = conn.cursor()
     if message.text == "Daily report":
-        cur.execute("SELECT * FROM records WHERE date LIKE '{}%'".format(day))
+
+        # defining the day
+        day = datetime.date.today().strftime("%x")
+        cur.execute("SELECT category, SUM(amount) FROM records WHERE date LIKE '{}%' GROUP BY category".format(day))
         records = cur.fetchall()
+        cur.close()
         if records:
             info = ''
             for el in records:
-                info += (f"\n<b>DATE</b>: {el[1]}; <b>CATEGORY</b>: {el[2]}; <b>AMOUNT</b>: {el[3]}\n"
+                info += (f"\n<b>CATEGORY</b>: {el[0]}; <b>AMOUNT</b>: {el[1]}\n"
                      f"-----------------------------------------------------------------------------------")
             bot.send_message(message.chat.id, info, parse_mode='html')
+            bot.send_message(message.chat.id, "Great! Go to the menu.")
         else:
             bot.send_message(message.chat.id, "There are no records from this day, go back to /reports")
 
-
     elif message.text == "Weekly report":
-        bot.send_message(message.chat.id, "Ok, it's weekly rep.")
-    elif message.text == "Daily report of the specific category":
-        bot.send_message(message.chat.id, "Ok, it's daily report of the specific category")
-    else:
-        bot.send_message(message.chat.id, "Ok, it's weekly report of the specific category")
-    cur.close()
-    conn.close()
+        cur.execute("SELECT category, SUM(amount) FROM records GROUP BY category")
+        records = cur.fetchall()
+        cur.close()
+        if records:
+            info = ''
+            for el in records:
+                info += (f"\n<b>CATEGORY</b>: {el[0]}; <b>AMOUNT</b>: {el[1]}\n"
+                         f"-----------------------------------------------------------------------------------")
+            bot.send_message(message.chat.id, info, parse_mode='html')
+            bot.send_message(message.chat.id, "Great! Go to the menu.")
+        else:
+            bot.send_message(message.chat.id, "There are no records from this day, go back to /reports")
 
+    conn.close()
 
 bot.infinity_polling()
