@@ -33,14 +33,17 @@ def start(message):
     cur.execute('CREATE TABLE IF NOT EXISTS records (id INTEGER PRIMARY KEY, '
                 'date DATE, category varchar(50), amount float, info varchar(100))')
     conn.commit()
+
+    # check if it's Monday and the database
+    day = datetime.date.today().strftime("%a")
+
+    cur.execute("SELECT * FROM records")
+    records = cur.fetchall()
     cur.close()
     conn.close()
 
-
-    # cur.execute("SELECT * FROM records")
-    # records = cur.fetchall()
-    # cur.close()
-    # conn.close()
+    if records and day == 'Mon':
+        bot.send_message(message.chat.id, "It's <b>Monday</b> and database is <b>not empty</b>!", parse_mode='html')
 
     # category buttons
     markup = telebot.types.InlineKeyboardMarkup()
@@ -57,7 +60,7 @@ def start(message):
     cat_btn9 = telebot.types.InlineKeyboardButton('Other', callback_data='Other')
     markup.row(cat_btn7, cat_btn8, cat_btn9)
     markup.add(telebot.types.InlineKeyboardButton('Check the data base', callback_data='check_first'))
-    markup.add(telebot.types.InlineKeyboardButton('Clear the database', callback_data='delete'))
+    markup.add(telebot.types.InlineKeyboardButton('Clean the database', callback_data='delete'))
 
     bot.send_message(message.chat.id, "Choose the category below:", reply_markup=markup)
 
@@ -143,7 +146,7 @@ def cont(message):
     end_btn2 = telebot.types.InlineKeyboardButton('No', callback_data='no')
     markup.row(end_btn1, end_btn2)
     markup.add(telebot.types.InlineKeyboardButton('Check the database', callback_data='check_second'))
-    markup.add(telebot.types.InlineKeyboardButton('Clear the database', callback_data='delete'))
+    markup.add(telebot.types.InlineKeyboardButton('Clean the database', callback_data='delete'))
     bot.send_message(message.chat.id, "Do you want to continue?", reply_markup=markup)
 
 
@@ -178,9 +181,6 @@ def func(message):
     btn1 = telebot.types.KeyboardButton("Daily report")
     btn2 = telebot.types.KeyboardButton("Weekly report")
     markup.row(btn1, btn2)
-    btn3 = telebot.types.KeyboardButton("Daily report of the specific category")
-    btn4 = telebot.types.KeyboardButton("Weekly report of the specific category")
-    markup.row(btn3, btn4)
     bot.send_message(message.chat.id, "Here you can get a report. Choose which one you want get", reply_markup=markup)
     bot.register_next_step_handler(message, on_click)
 
